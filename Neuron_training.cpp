@@ -81,7 +81,7 @@ int main() {
   cout << "loaded " << data.size() << " examples" << endl;
 
   int epochs = 500;
-  double learningRate = 0.01;
+  double learningRate = 0.02;
   trainNeuron(data, epochs, learningRate);
 
   return 0;
