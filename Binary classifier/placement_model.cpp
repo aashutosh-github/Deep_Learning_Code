@@ -96,14 +96,13 @@ normalized_stats compute_normalized_stats(const vector<Student> &students) {
     stats.attendance_min = min(s.attendance, stats.attendance_min);
   }
 
-  std::cout << "\n─── Normalization Stats (from training data) ───\n";
-  std::cout << "DSA:        [" << stats.dsa_min << ", " << stats.dsa_max
-            << "]\n";
-  std::cout << "Projects:   [" << stats.projects_min << ", "
-            << stats.projects_max << "]\n";
-  std::cout << "IQ:         [" << stats.iq_min << ", " << stats.iq_max << "]\n";
-  std::cout << "Attendance: [" << stats.attendance_min << ", "
-            << stats.attendance_max << "]\n";
+  cout << "\n─── Normalization Stats (from training data) ───\n";
+  cout << "DSA:        [" << stats.dsa_min << ", " << stats.dsa_max << "]\n";
+  cout << "Projects:   [" << stats.projects_min << ", " << stats.projects_max
+       << "]\n";
+  cout << "IQ:         [" << stats.iq_min << ", " << stats.iq_max << "]\n";
+  cout << "Attendance: [" << stats.attendance_min << ", "
+       << stats.attendance_max << "]\n";
 
   return stats;
 }
@@ -149,9 +148,9 @@ double binary_cross_entropy_loss(double prediction, double actual_value) {
 void train(model_weights &m, const vector<Student> &data,
            const normalized_stats &n, double lr, int epochs) {
 
+  cout << "\n------Training------\n";
   for (int epoch = 1; epoch <= epochs; epoch++) {
     double total_loss_in_this_epoch = 0.0;
-    cout << "\n------Training------\n";
     for (const Student &s : data) {
       double prediction = predict(n, m, s);
       total_loss_in_this_epoch +=
@@ -177,4 +176,46 @@ void train(model_weights &m, const vector<Student> &data,
            << setprecision(4) << total_loss_in_this_epoch / data.size() << endl;
     }
   }
+}
+
+void evaluate(const model_weights &m, const vector<Student> &data,
+              const normalized_stats &n) {
+  int correct = 0;
+  for (const Student &s : data) {
+    double p = predict(n, m, s);
+    int predicted = (p >= 0.5) ? 1 : 0;
+    if (predicted == s.placed) correct++;
+  }
+  double accuracy_percentage = (double)correct / data.size() * 100;
+  cout << "\n─── Accuracy on training data ───\n";
+  cout << "Correct: " << correct << " / " << data.size() << "  (" << fixed
+       << setprecision(2) << accuracy_percentage << "%)\n";
+}
+
+int main() {
+
+  vector<Student> data = load_CSV("students.csv");
+  if (data.empty()) return 1;
+
+  // compute normalization stats FROM training data
+  // no hardcoding — model figures out min/max itself
+  normalized_stats norm_stat = compute_normalized_stats(data);
+
+  // initialize model
+  model_weights model;
+
+  // train
+  train(model, data, norm_stat, 0.05, 1000);
+
+  // print final weights
+  cout << "\n─── Final Weights ───\n";
+  cout << "w_dsa:        " << model.dsa_w << "\n";
+  cout << "w_projects:   " << model.projects_w << "\n";
+  cout << "w_iq:         " << model.iq_w << "\n";
+  cout << "w_attendance: " << model.attendance_w << "\n";
+  cout << "bias:         " << model.bias << "\n";
+
+  // evaluate accuracy
+  evaluate(model, data, norm_stat);
+  return 0;
 }
